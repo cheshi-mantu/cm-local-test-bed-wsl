@@ -132,4 +132,103 @@ sudo apt install openjdk-8-jre-headless
 ```
 Всё ок.
 
+## Ставим все через docker-compose
 
+### Selenoid
+
+Описано здесь: https://aerokube.com/selenoid/latest/#_selenoid_with_docker_compose
+
+#### Готовим конфиг для docker-compose
+
+В папке проекта создаем файл `docker-compose.yml` 
+
+```yaml
+version: '3.4'
+
+services:
+  selenoid:
+    image: aerokube/selenoid:latest-release
+    volumes:
+      - "${PWD}/init/selenoid:/etc/selenoid"
+      - "${PWD}/work/selenoid/video:/opt/selenoid/video"
+      - "${PWD}/work/selenoid/logs:/opt/selenoid/logs"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+      - OVERRIDE_VIDEO_OUTPUT_DIR=work/selenoid/video
+    command: ["-conf", "/etc/selenoid/browsers.json", "-video-output-dir", "/opt/selenoid/video", "-log-output-dir", "/opt/selenoid/logs"]
+    ports:
+      - "4444:4444"
+    network_mode: bridge
+```
+
+${PWD} - текущая директория
+
+`volumes` позволяет монтировать папки файловой системы локальной машины в контейнер.
+
+Для строки типа `"${PWD}/init/selenoid:/etc/selenoid"` слева от двоеточия находится папка, которая лежит на локальной машине (в Linux distro), справа — на файловой системе контейнера.
+
+##### В папке проекта создаём подпапки
+- init/selenoid
+- work/selenoid/video
+- work/selenoid/logs
+
+#### Файлы внутри init/selenoid
+
+Создаём `browsers.json`
+
+```json
+{
+    "chrome": {
+      "default": "88.0",
+        "88.0": {
+          "env" : ["LANG=ru_RU.UTF-8", "LANGUAGE=ru:en", "LC_ALL=ru_RU.UTF-8", "TZ=Europe/Moscow"],
+          "image": "selenoid/vnc:chrome_88.0",
+          "tmpfs": {"/tmp": "size=512m"},
+          "port": "4444"
+        }
+      }
+    }
+  }
+```
+#### Образы браузеров
+
+Образы браузеров необходимо скачивать самостоятельно. Для примера выше потребуется образ браузера `selenoid/vnc:chrome_88.0`, он скачивается следующим образом:
+
+```bash
+docker pull selenoid/vnc:chrome_88.0
+```
+После этого, можно попробовать запустить то, что получилось.
+
+#### Запуск через docker-compose
+
+В папке проекта выполняем:
+
+```bash
+    docker-compose up
+```
+В консоли будет что-то вроде вот этого:
+
+```
+user@pc:/path/project$ docker-compose up
+Starting project_selenoid_1 ... done
+Attaching to project_selenoid_1
+selenoid_1     | 2021/03/03 20:33:19 [-] [INIT] [Loading configuration files...]
+selenoid_1     | 2021/03/03 20:33:19 [-] [INIT] [Loaded configuration from /etc/selenoid/browsers.json]
+selenoid_1     | 2021/03/03 20:33:19 [-] [INIT] [Video Dir: /opt/selenoid/video]
+selenoid_1     | 2021/03/03 20:33:19 [-] [INIT] [Logs Dir: /opt/selenoid/logs]
+selenoid_1     | 2021/03/03 20:33:19 [-] [INIT] [Your Docker API version is 1.41]
+selenoid_1     | 2021/03/03 20:33:19 [-] [INIT] [Timezone: UTC]
+selenoid_1     | 2021/03/03 20:33:19 [-] [INIT] [Listening on :4444]
+```
+
+В браузере заходим http://your-ip-address:4444/status
+
+Должна быть видна JSON строка `{"total":5,"used":0,"queued":0,"pending":0,"browsers":{"chrome":{"75.0":{},"76.0":{},"87.0":{},"88.0":{}}}}`
+
+Выключаем при помощи Ctrl+C, переходим к след. шагу.
+
+### Selenoid UI
+
+
+
+### Jenkins
