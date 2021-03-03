@@ -140,7 +140,7 @@ sudo apt install openjdk-8-jre-headless
 
 #### Готовим конфиг для docker-compose
 
-В папке проекта создаем файл `docker-compose.yml` 
+В папке проекта создаем файл `docker-compose.yml`
 
 ```yaml
 version: '3.4'
@@ -229,6 +229,20 @@ selenoid_1     | 2021/03/03 20:33:19 [-] [INIT] [Listening on :4444]
 
 ### Selenoid UI
 
+Описано здесь: http://aerokube.com/selenoid-ui/latest/#_with_docker_compose
+
+Добавляем в файл `docker-compose.yml` необходимое для запуска selenoid-ui:
+
+```yaml
+  selenoid-ui:
+    image: "aerokube/selenoid-ui:latest-release"
+    network_mode: bridge
+    links:
+      - selenoid
+    ports:
+      - "8080:8080"
+    command: ["--selenoid-uri", "http://selenoid:4444"]
+```
 
 
 ### Jenkins
