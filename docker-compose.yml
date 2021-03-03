@@ -15,7 +15,7 @@ services:
       - "4444:4444"
     network_mode: bridge
   selenoid-ui:
-    image: "aerokube/selenoid-ui"
+    image: "aerokube/selenoid-ui:latest-release"
     network_mode: bridge
     links:
       - selenoid
