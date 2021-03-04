@@ -30,10 +30,3 @@ services:
     ports:
       - 8888:8080
     network_mode: bridge
-  jira:
-      image: atlassian/jira-software:8.8.1
-      volumes:
-      - "${PWD}/work/jira:/var/atlassian/application-data/jira"
-      ports:
-        - "9999:8080"
-      network_mode: bridge
