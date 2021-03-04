@@ -221,7 +221,7 @@ selenoid_1     | 2021/03/03 20:33:19 [-] [INIT] [Timezone: UTC]
 selenoid_1     | 2021/03/03 20:33:19 [-] [INIT] [Listening on :4444]
 ```
 
-В браузере заходим http://your-ip-address:4444/status
+В браузере заходим `http://your-ip-address:4444/status`
 
 Должна быть видна JSON строка `{"total":5,"used":0,"queued":0,"pending":0,"browsers":{"chrome":{"75.0":{},"76.0":{},"87.0":{},"88.0":{}}}}`
 
@@ -243,6 +243,112 @@ selenoid_1     | 2021/03/03 20:33:19 [-] [INIT] [Listening on :4444]
       - "8080:8080"
     command: ["--selenoid-uri", "http://selenoid:4444"]
 ```
+#### Проверяем работоспособность
 
+```bash
+    docker-compose up
+```
+В браузере заходим `http://your-ip-address:8080`
+
+Мы должны видеть веб-страницу selenoid-ui.
+
+ ![Selenoid-ui up and running](./img/selenoid-ui-main.png)
+
+1. Переходим на вкладку Capabilities
+2. Выбираем браузер
+3. Запускаем ручную сессию
+
+Чтобы иметь возможность управлять браузером внутри контейнера, нужно его разблокировать (1) и лучше раскрыть VNC окно на максимум (2).
+
+ ![Selenoid-ui up and running](./img/selenoid-manual-session.png)
+
+Если все работает, то останавливаем docker-compose и переходим к установке Jenkins.  
 
 ### Jenkins
+
+гуглим конфиг: https://is.gd/LKXZ9k
+
+1. Добавляем к `docker-compose.yml`
+
+```yaml
+  jenkins:
+    image: jenkins/jenkins:lts
+    user: root
+    volumes:
+      - ${PWD}/work/jenkins:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 8888:8080
+    network_mode: bridge
+```
+
+2. Запускаем docker-compose
+
+```bash
+  docker-compose up
+```
+Ждём, когда закачается образ и Jenkins стартует. В логах должно появиться следующее сообщение:
+
+```bash
+jenkins_1      | Jenkins initial setup is required. An admin user has been created and a password generated.
+jenkins_1      | Please use the following password to proceed to installation:
+jenkins_1      |
+jenkins_1      | 32d64223e62945fe8c4c1ed050360700
+jenkins_1      |
+jenkins_1      | This may also be found at: /var/jenkins_home/secrets/initialAdminPassword
+jenkins_1      |
+jenkins_1      | *************************************************************
+jenkins_1      | *************************************************************
+jenkins_1      | *************************************************************
+```
+Этот пароль понадобится для самого первого входа Jenkins, потом про него можно забыть.
+
+3. Устанавливаем плагины по умолчанию (потом можно удалить то, что ненужно).
+4. Создаём администратора и переходим к начальной конфигурации Jenkins.
+
+#### Начальная конфигурация
+
+##### Global tool configuration :: JDK > Add JDK
+
+1. Убираем галку Install Automatically.
+2. Name: можно написать что угодно, но лучше правду: OpenJDK 11.
+3. JAVA_HOME вставляем ```$JAVA_HOME```.
+4. Жмём APPLY внизу страницы.
+
+
+##### Global tool configuration :: Gradle
+1. Add gradle
+2. Отмечаем Install Automatically.
+3. Name: что угодно
+4. Install from Gradle.org и выбрать нужную версию.
+
+### Запуск стенда в detached режиме.
+
+Этот режим нужен для того, чтобы вы не видели весь-весь консольный вывод приложений, которые у вас сейчас запущены в докере.
+
+Останавливаем docker-compose Ctrl+C.
+
+#### Запускаем в detached
+
+```bash
+    docker-compose up -d
+```
+Вы увидите в консоли только вот это:
+
+```
+user@pc:/path$ docker-compose up -d
+Starting cm-local-test-bed-wsl_jenkins_1     ... done
+Starting cm-local-test-bed-wsl_selenoid_1 ... done
+Starting cm-local-test-bed-wsl_selenoid-ui_1 ... done
+```
+Далее вы вернётесь в консоль, а docker-compose продолжит свою работу.
+
+#### Остановка docker-compose
+
+Чтобы остановить все запущенные приложения, необходимо выполнить следующую команду:
+
+```bash
+  docker-compose down
+```
+
+Вот и всё.
